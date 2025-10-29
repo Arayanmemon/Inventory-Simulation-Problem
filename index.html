@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dynamic Inventory Simulation</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            padding: 30px;
+        }
+        
+        h1 {
+            color: #667eea;
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 2em;
+        }
+        
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 1.1em;
+        }
+
+        .config-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 25px;
+            margin-bottom: 25px;
+        }
+
+        .input-section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+        }
+
+        .dist-input-section h3 {
+            font-size: 1.2em;
+            color: #333;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 5px;
+        }
+        
+        .input-group {
+            margin-bottom: 15px;
+        }
+        
+        label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: #333;
+        }
+        
+        input[type="text"], input[type="number"] {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+            font-family: monospace;
+        }
+        
+        input[type="text"]:focus, input[type="number"]:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        /* Styles for new dynamic inputs */
+        .dist-row {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .dist-row input {
+            flex: 1;
+        }
+        .remove-btn {
+            background: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            font-weight: bold;
+            font-size: 16px;
+            cursor: pointer;
+            line-height: 24px;
+            text-align: center;
+        }
+        .btn-add {
+            background: #28a745;
+            color: white;
+            padding: 8px 15px;
+            border: none;
+            border-radius: 5px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+            display: block;
+            margin: 20px auto 0;
+            width: 100%;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .results {
+            margin-top: 30px;
+        }
+        
+        .summary-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        .card-title {
+            font-size: 0.9em;
+            opacity: 0.9;
+            margin-bottom: 10px;
+        }
+        
+        .card-value {
+            font-size: 1.8em;
+            font-weight: bold;
+        }
+        
+        .distribution-tables {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .dist-table {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+        }
+        
+        .dist-table h3 {
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 1.1em;
+        }
+        
+        .dist-table table {
+            width: 100%;
+            font-size: 0.85em;
+        }
+        
+        .dist-table th {
+            background: #667eea;
+            color: white;
+            padding: 8px;
+            font-size: 0.9em;
+        }
+        
+        .dist-table td {
+            padding: 6px 8px;
+            text-align: center;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .table-container {
+            overflow-x: auto;
+            margin-top: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+        }
+        
+        th {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px 10px;
+            text-align: center;
+            font-weight: 600;
+            font-size: 0.9em;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        
+        td {
+            padding: 10px 8px;
+            text-align: center;
+            border: 1px solid #eee;
+            font-size: 0.9em;
+        }
+        
+        tbody tr:hover {
+            background: #f8f9fa;
+        }
+        
+        .order-row {
+            background: #fff3cd !important;
+        }
+        
+        .shortage {
+            color: #dc3545;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📦 Dynamic Inventory Simulation</h1>
+        <p class="subtitle">Configure simulation parameters and probability distributions</p>
+        
+        <div class="distribution-tables">
+            <div class="dist-table">
+                <h3>Demand/week (thousand units)</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Demand</th>
+                            <th>Probability</th>
+                            <th>Cumulative</th>
+                            <th>RN Range</th>
+                        </tr>
+                    </thead>
+                    <tbody id="demandDistBody">
+                        </tbody>
+                </table>
+            </div>
+            
+            <div class="dist-table">
+                <h3>Lead Time (weeks)</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Lead Time</th>
+                            <th>Probability</th>
+                            <th>Cumulative</th>
+                            <th>RN Range</th>
+                        </tr>
+                    </thead>
+                    <tbody id="leadTimeDistBody">
+                        </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <div class="config-section">
+            <div class="dist-input-section">
+                <h3>Demand Distribution</h3>
+                <div id="demandInputs">
+                    </div>
+                <button class="btn-add" onclick="addDemandRow()">+ Add Demand Row</button>
+                
+                <h3 style="margin-top: 20px;">Lead Time Distribution</h3>
+                <div id="leadTimeInputs">
+                    </div>
+                <button class="btn-add" onclick="addLeadTimeRow()">+ Add Lead Time Row</button>
+            </div>
+
+            <div class="input-section">
+                <div class="input-group">
+                    <label>Reorder Point (thousand units):</label>
+                    <input type="number" id="reorderPoint" value="50" min="0" max="200">
+                </div>
+                
+                <div class="input-group">
+                    <label>Maximum Inventory (thousand units):</label>
+                    <input type="number" id="maxInventory" value="100" min="50" max="300">
+                </div>
+                
+                <div class="input-group">
+                    <label>Order Cost (Rs):</label>
+                    <input type="number" id="orderCost" value="100" min="1" max="1000">
+                </div>
+                
+                <div class="input-group">
+                    <label>Shortage Cost per Unit (Rs):</label>
+                    <input type="number" id="shortageCostPerUnit" value="20" min="1" max="100">
+                </div>
+                
+                <div class="input-group">
+                    <label>Initial Inventory (thousand units):</label>
+                    <input type="number" id="initialInventory" value="80" min="0" max="200">
+                </div>
+                
+                <div class="input-group">
+                    <label>Number of Weeks to Simulate:</label>
+                    <input type="number" id="numWeeks" value="20" min="1" max="52">
+                </div>
+                
+                <button class="btn" onclick="runSimulation()">🚀 Run Simulation</button>
+            </div>
+        </div>
+        
+        <div id="results" class="results" style="display: none;">
+            <div class="summary-cards">
+                <div class="card">
+                    <div class="card-title">Total Orders Placed</div>
+                    <div class="card-value" id="totalOrders">0</div>
+                </div>
+                <div class="card">
+                    <div class="card-title">Total Ordering Cost</div>
+                    <div class="card-value" id="orderingCost">Rs 0</div>
+                </div>
+                <div class="card">
+                    <div class="card-title">Total Shortage Cost</div>
+                    <div class="card-value" id="shortageCost">Rs 0</div>
+                </div>
+                <div class="card">
+                    <div class="card-title">Total Cost</div>
+                    <div class="card-value" id="totalCost">Rs 0</div>
+                </div>
+                <div class="card">
+                    <div class="card-title">Avg Weekly Cost</div>
+                    <div class="card-value" id="avgWeeklyCost">Rs 0</div>
+                </div>
+            </div>
+            
+            <div class="table-container">
+                <table id="simulationTable">
+                    <thead>
+                        <tr>
+                            <th>Week#</th>
+                            <th>Beg. Inv.</th>
+                            <th>RD<br>Demand</th>
+                            <th>Demand</th>
+                            <th>End. Inv.</th>
+                            <th>RD LT</th>
+                            <th>LT</th>
+                            <th>Order<br>Placed</th>
+                            <th>Shortage<br>Cost</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Global arrays to hold the dynamic distributions
+        let demandDistribution = [];
+        let leadTimeDistribution = [];
+
+        // --- NEW: Functions to add/remove input rows ---
+        function addDemandRow(value = '', prob = '') {
+            const container = document.getElementById('demandInputs');
+            const row = document.createElement('div');
+            row.className = 'dist-row';
+            row.innerHTML = `
+                <input type="number" class="dist-value" placeholder="Demand Value" value="${value}">
+                <input type="number" class="dist-prob" placeholder="Prob. (e.g., 0.3)" step="0.01" min="0" max="1" value="${prob}">
+                <button class="remove-btn" onclick="this.parentElement.remove()">×</button>
+            `;
+            container.appendChild(row);
+        }
+
+        function addLeadTimeRow(value = '', prob = '') {
+            const container = document.getElementById('leadTimeInputs');
+            const row = document.createElement('div');
+            row.className = 'dist-row';
+            row.innerHTML = `
+                <input type="number" class="dist-value" placeholder="Lead Time Value" value="${value}">
+                <input type="number" class="dist-prob" placeholder="Prob. (e.g., 0.3)" step="0.01" min="0" max="1" value="${prob}">
+                <button class="remove-btn" onclick="this.parentElement.remove()">×</button>
+            `;
+            container.appendChild(row);
+        }
+
+        // --- NEW: Function to process and validate inputs ---
+        function processDistributions() {
+            demandDistribution = [];
+            leadTimeDistribution = [];
+
+            const demandTbody = document.getElementById('demandDistBody');
+            const leadTimeTbody = document.getElementById('leadTimeDistBody');
+            demandTbody.innerHTML = '';
+            leadTimeTbody.innerHTML = '';
+
+            // --- Process Demand ---
+            let demandCumProb = 0;
+            let lastRN = 0;
+            const demandRows = document.querySelectorAll('#demandInputs .dist-row');
+            
+            if (demandRows.length === 0) {
+                alert('Error: Please add at least one demand distribution row.');
+                return false;
+            }
+
+            for (const row of demandRows) {
+                const value = parseFloat(row.querySelector('.dist-value').value);
+                const prob = parseFloat(row.querySelector('.dist-prob').value);
+                
+                if (isNaN(value) || isNaN(prob) || prob <= 0) {
+                    alert('Error in Demand: Please fill all fields with valid numbers. Probability must be > 0.');
+                    return false;
+                }
+
+                demandCumProb += prob;
+                const rnMin = lastRN + 1;
+                const rnMax = Math.round(demandCumProb * 100);
+                
+                demandDistribution.push({ value, prob, cumProb: demandCumProb, rnMin, rnMax });
+                lastRN = rnMax;
+
+                demandTbody.innerHTML += `
+                    <tr>
+                        <td>${value}</td>
+                        <td>${prob}</td>
+                        <td>${demandCumProb.toFixed(2)}</td>
+                        <td>${String(rnMin).padStart(2, '0')}-${(rnMax === 100) ? '00' : String(rnMax).padStart(2, '0')}</td>
+                    </tr>
+                `;
+            }
+            
+            if (Math.abs(demandCumProb - 1.0) > 0.01) {
+                // alert(Error: Demand probabilities add up to ${demandCumProb.toFixed(2)}, not 1.0.);
+                return false;
+            }
+            if (demandDistribution.length > 0) {
+                demandDistribution[demandDistribution.length-1].rnMax = 100; // Ensure last range goes to 100
+            }
+
+            // --- Process Lead Time ---
+            let leadTimeCumProb = 0;
+            lastRN = 0;
+            const leadTimeRows = document.querySelectorAll('#leadTimeInputs .dist-row');
+            
+            if (leadTimeRows.length === 0) {
+                alert('Error: Please add at least one lead time distribution row.');
+                return false;
+            }
+
+            for (const row of leadTimeRows) {
+                const value = parseFloat(row.querySelector('.dist-value').value);
+                const prob = parseFloat(row.querySelector('.dist-prob').value);
+                
+                if (isNaN(value) || isNaN(prob) || prob <= 0) {
+                    alert('Error in Lead Time: Please fill all fields with valid numbers. Probability must be > 0.');
+                    return false;
+                }
+                
+                leadTimeCumProb += prob;
+                const rnMin = lastRN + 1;
+                const rnMax = Math.round(leadTimeCumProb * 100);
+
+                leadTimeDistribution.push({ value, prob, cumProb: leadTimeCumProb, rnMin, rnMax });
+                lastRN = rnMax;
+
+                leadTimeTbody.innerHTML += `
+                    <tr>
+                        <td>${value}</td>
+                        <td>${prob}</td>
+                        <td>${leadTimeCumProb.toFixed(2)}</td>
+                        <td>${String(rnMin).padStart(2, '0')}-${(rnMax === 100) ? '00' : String(rnMax).padStart(2, '0')}</td>
+                    </tr>
+                `;
+            }
+
+            if (Math.abs(leadTimeCumProb - 1.0) > 0.01) {
+                // alert(Error: Lead Time probabilities add up to ${leadTimeCumProb.toFixed(2)}, not 1.0.);
+                return false;
+            }
+            if (leadTimeDistribution.length > 0) {
+                leadTimeDistribution[leadTimeDistribution.length-1].rnMax = 100; // Ensure last range goes to 100
+            }
+            
+            return true; // Success
+        }
+
+        // --- UPDATED: Dynamic lookup functions ---
+        function getDemand(randomDigit) {
+            // randomDigit is 1-100
+            for (const entry of demandDistribution) {
+                if (randomDigit >= entry.rnMin && randomDigit <= entry.rnMax) {
+                    return entry.value;
+                }
+            }
+            return demandDistribution[demandDistribution.length - 1].value; // Fallback
+        }
+        
+        function getLeadTime(randomDigit) {
+            // randomDigit is 1-100
+            for (const entry of leadTimeDistribution) {
+                if (randomDigit >= entry.rnMin && randomDigit <= entry.rnMax) {
+                    return entry.value;
+                }
+            }
+            return leadTimeDistribution[leadTimeDistribution.length - 1].value; // Fallback
+        }
+        
+        // --- UPDATED: runSimulation main function ---
+        function runSimulation() {
+            
+            // Step 1: Process and validate the dynamic inputs
+            if (!processDistributions()) {
+                document.getElementById('results').style.display = 'none'; // Hide old results if validation fails
+                return; // Stop execution if inputs are invalid
+            }
+
+            // Step 2: Get simulation parameters (this is your original code)
+            const reorderPoint = parseInt(document.getElementById('reorderPoint').value);
+            const maxInventory = parseInt(document.getElementById('maxInventory').value);
+            const orderCost = parseInt(document.getElementById('orderCost').value);
+            const shortageCostPerUnit = parseInt(document.getElementById('shortageCostPerUnit').value);
+            const initialInventory = parseInt(document.getElementById('initialInventory').value);
+            const numWeeks = parseInt(document.getElementById('numWeeks').value);
+            
+            let currentInventory = initialInventory;
+            let totalOrders = 0;
+            let totalOrderingCost = 0;
+            let totalShortageCost = 0;
+            
+            const pendingOrders = [];
+            
+            const tableBody = document.getElementById('tableBody');
+            tableBody.innerHTML = '';
+            
+            // Step 3: Run the simulation loop (this is your original code, unchanged)
+            for (let week = 1; week <= numWeeks; week++) {
+                let beginningInventory = currentInventory;
+                
+                let orderReceived = 0;
+                for (let i = pendingOrders.length - 1; i >= 0; i--) {
+                    if (pendingOrders[i].arrivalWeek === week) {
+                        orderReceived = pendingOrders[i].quantity;
+                        beginningInventory += orderReceived;
+                        pendingOrders.splice(i, 1);
+                        break;
+                    }
+                }
+                
+                let orderPlaced = '';
+                let rdLeadTime = '';
+                let leadTime = '';
+                
+                if (beginningInventory <= reorderPoint && pendingOrders.length === 0) {
+                    const orderQty = maxInventory - beginningInventory;
+                    orderPlaced = orderQty;
+                    
+                    rdLeadTime = Math.floor(Math.random() * 100) + 1; // Generates 1-100
+                    leadTime = getLeadTime(rdLeadTime); // Uses NEW dynamic function
+                    
+                    pendingOrders.push({
+                        quantity: orderQty,
+                        arrivalWeek: week + leadTime + 1
+                    });
+                    
+                    totalOrders++;
+                    totalOrderingCost += orderCost;
+                }
+                
+                const rdDemand = Math.floor(Math.random() * 100) + 1; // Generates 1-100
+                const demand = getDemand(rdDemand); // Uses NEW dynamic function
+                
+                let endingInventory = beginningInventory - demand;
+                let shortage = 0;
+                
+                if (endingInventory < 0) {
+                    shortage = Math.abs(endingInventory);
+                    endingInventory = 0;
+                }
+                
+                const shortageCost = shortage * shortageCostPerUnit;
+                totalShortageCost += shortageCost;
+                
+                const row = tableBody.insertRow();
+                row.innerHTML = `
+                    <td><strong>${week}</strong></td>
+                    <td>${beginningInventory}</td>
+                    <td>${rdDemand}</td>
+                    <td>${demand}</td>
+                    <td>${endingInventory}</td>
+                    <td>${rdLeadTime || ''}</td>
+                    <td>${leadTime || ''}</td>
+                    <td>${orderPlaced || ''}</td>
+                    <td class="${shortageCost > 0 ? 'shortage' : ''}">${shortageCost > 0 ? shortageCost : ''}</td>
+                `;
+                
+                if (orderPlaced) {
+                    row.classList.add('order-row');
+                }
+                
+                currentInventory = endingInventory;
+            }
+            
+            // Step 4: Display results (this is your original code)
+            const totalCost = totalOrderingCost + totalShortageCost;
+            const avgWeeklyCost = totalCost / numWeeks;
+            
+            document.getElementById('totalOrders').textContent = totalOrders;
+            document.getElementById('orderingCost').textContent = 'Rs ' + totalOrderingCost;
+            document.getElementById('shortageCost').textContent = 'Rs ' + totalShortageCost;
+            document.getElementById('totalCost').textContent = 'Rs ' + totalCost;
+            document.getElementById('avgWeeklyCost').textContent = 'Rs ' + avgWeeklyCost.toFixed(0);
+            
+            document.getElementById('results').style.display = 'block';
+        }
+
+        // --- NEW: Immediately-invoked function to set up default inputs ---
+        (function setupDefaultInputs() {
+            // Default Demand from your original problem
+            addDemandRow(10, 0.3);
+            addDemandRow(20, 0.4);
+            addDemandRow(30, 0.2);
+            addDemandRow(40, 0.1);
+
+            // Default Lead Time from your original problem
+            addLeadTimeRow(1, 0.3);
+            addLeadTimeRow(2, 0.4);
+            addLeadTimeRow(3, 0.3);
+
+            // Run processDistributions once on load to populate the display tables
+            processDistributions();
+        })();
+    </script>
+</body>
+</html>
